@@ -6,7 +6,7 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
-	"github.com/mailgun/mailgun-go/v4/events"
+	"github.com/nick-codes/mailgun-go/v4/events"
 )
 
 // ListEventOptions{} modifies the behavior of ListEvents()
