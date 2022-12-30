@@ -29,9 +29,12 @@ type MockServer interface {
 	Templates() []Template
 }
 
+// Compile time type check
+var _ MockServer = (*mockServer)(nil)
+
 // A mailgun api mock suitable for testing
 type mockServer struct {
-	srv *httptest.Server
+	*httptest.Server
 
 	domainIPS        []string
 	domainList       []DomainContainer
@@ -105,8 +108,7 @@ func (ms *mockServer) Unsubscribes() []Unsubscribe {
 	return ms.unsubscribes
 }
 
-// Create a new instance of the mailgun API mock server
-func NewMockServer() MockServer {
+func NewUnstartedMockServer() *mockServer {
 	ms := mockServer{}
 
 	// Add all our handlers
@@ -133,22 +135,29 @@ func NewMockServer() MockServer {
 	ms.addValidationRoutes(r)
 
 	// Start the server
-	ms.srv = httptest.NewServer(r)
+	ms.Server = httptest.NewUnstartedServer(r)
 	return &ms
+}
+
+// Create a new instance of the mailgun API mock server
+func NewMockServer() *mockServer {
+	ms := NewUnstartedMockServer()
+	ms.Server.Start()
+	return ms
 }
 
 // Stop the server
 func (ms *mockServer) Stop() {
-	ms.srv.Close()
+	ms.Server.Close()
 }
 
 func (ms *mockServer) URL4() string {
-	return ms.srv.URL + "/v4"
+	return ms.Server.URL + "/v4"
 }
 
 // URL returns the URL used to connect to the mock server
 func (ms *mockServer) URL() string {
-	return ms.srv.URL + "/v3"
+	return ms.Server.URL + "/v3"
 }
 
 func toJSON(w http.ResponseWriter, obj interface{}) {
