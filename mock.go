@@ -35,6 +35,7 @@ var _ MockServer = (*mockServer)(nil)
 // A mailgun api mock suitable for testing
 type mockServer struct {
 	*httptest.Server
+	*mux.Router
 
 	domainIPS        []string
 	domainList       []DomainContainer
@@ -112,7 +113,7 @@ func NewUnstartedMockServer() *mockServer {
 	ms := mockServer{}
 
 	// Add all our handlers
-	r := mux.NewRouter()
+	ms.Router = mux.NewRouter()
 
 	func(r *mux.Router) {
 		ms.addIPRoutes(r)
@@ -131,11 +132,11 @@ func NewUnstartedMockServer() *mockServer {
 		ms.addCredentialsRoutes(r)
 		ms.addStatsRoutes(r)
 		ms.addTagsRoutes(r)
-	}(r.PathPrefix("/v3").Subrouter())
-	ms.addValidationRoutes(r)
+	}(ms.Router.PathPrefix("/v3").Subrouter())
+	ms.addValidationRoutes(ms.Router)
 
-	// Start the server
-	ms.Server = httptest.NewUnstartedServer(r)
+	// Create the server
+	ms.Server = httptest.NewUnstartedServer(ms.Router)
 	return &ms
 }
 
